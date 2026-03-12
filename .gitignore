@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# generated static data (from export_static.py)
+/public/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
