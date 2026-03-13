@@ -48,6 +48,7 @@ interface LibraryExport {
 let cachedLibrary: LibraryExport | null = null;
 let cachedSnapshots: SnapshotData | null = null;
 let cachedExclusions: ExclusionsData | null = null;
+let cachedDeletedTracks: RawTrack[] | null = null;
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -84,6 +85,17 @@ async function getExclusions(): Promise<ExclusionsData> {
     }
   }
   return cachedExclusions;
+}
+
+async function getDeletedTracks(): Promise<RawTrack[]> {
+  if (!cachedDeletedTracks) {
+    try {
+      cachedDeletedTracks = await loadStaticJson<RawTrack[]>("deleted_tracks.json");
+    } catch {
+      cachedDeletedTracks = [];
+    }
+  }
+  return cachedDeletedTracks;
 }
 
 function makeTrackKey(t: RawTrack): string {
@@ -293,8 +305,18 @@ export async function computeStatsFromLibrary(filter?: StatsFilter): Promise<Sta
   const library = await getLibrary();
   const snapData = await getSnapshots();
   const excl = await getExclusions();
+  const deletedTracks = await getDeletedTracks();
 
-  const allLibraryTracks = library.tracks;
+  // Merge deleted tracks so they appear in all-time and period stats
+  let allLibraryTracks = library.tracks;
+  if (deletedTracks.length > 0) {
+    const existingKeys = new Set(allLibraryTracks.map(makeTrackKey));
+    const toMerge = deletedTracks.filter((dt) => !existingKeys.has(makeTrackKey(dt)));
+    if (toMerge.length > 0) {
+      allLibraryTracks = [...allLibraryTracks, ...toMerge];
+    }
+  }
+
   const tracks = applyExclusions(allLibraryTracks, excl);
 
   const isFiltered = !!(filter?.year || filter?.dateFrom || filter?.dateTo);
