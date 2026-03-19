@@ -226,15 +226,29 @@ function estimatePeriodPlays(
   // Try snapshot bracketing
   let idxBefore: number | null = null;
   let idxAfter: number | null = null;
+  let idxFirstInPeriod: number | null = null;
+  let idxLastInPeriod: number | null = null;
   for (let i = 0; i < snapshots.length; i++) {
     const st = new Date(snapshots[i].timestamp);
     if (st <= periodStart) idxBefore = i;
     if (st >= periodEnd && idxAfter === null) idxAfter = i;
+    if (st > periodStart && st < periodEnd) {
+      if (idxFirstInPeriod === null) idxFirstInPeriod = i;
+      idxLastInPeriod = i;
+    }
   }
 
-  if (idxBefore !== null && idxAfter !== null) {
-    const countsBefore = reconstructSnapshot(snapData, idxBefore);
-    const countsAfter = reconstructSnapshot(snapData, idxAfter);
+  // Use the best available bracket pair:
+  // - Ideal: snapshot before period + snapshot after period
+  // - Partial: first snapshot in period as start, or last snapshot in period as end
+  let bestStart = idxBefore;
+  let bestEnd = idxAfter;
+  if (bestStart === null && idxFirstInPeriod !== null) bestStart = idxFirstInPeriod;
+  if (bestEnd === null && idxLastInPeriod !== null) bestEnd = idxLastInPeriod;
+
+  if (bestStart !== null && bestEnd !== null && bestStart !== bestEnd) {
+    const countsBefore = reconstructSnapshot(snapData, bestStart);
+    const countsAfter = reconstructSnapshot(snapData, bestEnd);
     const result: Record<string, number> = {};
     for (const [key, countAfter] of Object.entries(countsAfter)) {
       const countBefore = countsBefore[key] || 0;
@@ -325,16 +339,63 @@ export async function computeStatsFromLibrary(filter?: StatsFilter): Promise<Sta
   let playedTracks: RawTrack[];
 
   if (isFiltered && filter) {
-    const { counts: periodEstimates, isReal } = estimatePeriodPlays(tracks, snapData, filter);
-    isRealSnapshotData = isReal;
-    isEstimated = !isReal && Object.keys(periodEstimates).length > 0;
+    // Day-level filtering: use lastPlayed to identify which tracks were
+    // played, and snapshot diffs for the delta play count (not all-time).
+    if (filter.year && filter.month && filter.day && !filter.dateFrom && !filter.dateTo) {
+      const { counts: periodEstimates } = estimatePeriodPlays(tracks, snapData, filter);
 
-    playedTracks = [];
-    for (const t of tracks) {
-      const key = makeTrackKey(t);
-      const estPlays = periodEstimates[key] || 0;
-      if (estPlays > 0) {
-        playedTracks.push({ ...t, playCount: estPlays });
+      playedTracks = [];
+      for (const t of tracks) {
+        if ((t.playCount || 0) <= 0) continue;
+        const lp = parseDate(t.lastPlayed);
+        if (!lp) continue;
+        if (lp.getFullYear() === filter.year && lp.getMonth() === filter.month - 1 && lp.getDate() === filter.day) {
+          const key = makeTrackKey(t);
+          // Use snapshot delta if available, otherwise count as 1
+          playedTracks.push({ ...t, playCount: periodEstimates[key] || 1 });
+        }
+      }
+      isRealSnapshotData = true;
+    } else {
+      const { counts: periodEstimates, isReal } = estimatePeriodPlays(tracks, snapData, filter);
+      isRealSnapshotData = isReal;
+      isEstimated = !isReal && Object.keys(periodEstimates).length > 0;
+
+      // Supplement with tracks whose lastPlayed falls in the period but
+      // were missed by snapshots (e.g. Apple Music sync delay)
+      if (isReal) {
+        let lpStart: Date | null = null;
+        let lpEnd: Date | null = null;
+        if (filter.dateFrom || filter.dateTo) {
+          lpStart = filter.dateFrom ? new Date(filter.dateFrom) : new Date(2000, 0, 1);
+          lpEnd = filter.dateTo ? new Date(filter.dateTo + "T23:59:59") : new Date(2099, 11, 31);
+        } else if (filter.year && filter.month) {
+          lpStart = new Date(filter.year, filter.month - 1, 1);
+          lpEnd = new Date(filter.year, filter.month, 1);
+        } else if (filter.year) {
+          lpStart = new Date(filter.year, 0, 1);
+          lpEnd = new Date(filter.year + 1, 0, 1);
+        }
+        if (lpStart && lpEnd) {
+          for (const t of tracks) {
+            const key = makeTrackKey(t);
+            if (periodEstimates[key]) continue;
+            const lp = parseDate(t.lastPlayed);
+            if (!lp) continue;
+            if (lp >= lpStart && lp <= lpEnd && (t.playCount || 0) > 0) {
+              periodEstimates[key] = t.playCount;
+            }
+          }
+        }
+      }
+
+      playedTracks = [];
+      for (const t of tracks) {
+        const key = makeTrackKey(t);
+        const estPlays = periodEstimates[key] || 0;
+        if (estPlays > 0) {
+          playedTracks.push({ ...t, playCount: estPlays });
+        }
       }
     }
   } else {
