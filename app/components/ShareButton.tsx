@@ -190,29 +190,116 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
       ctx.textAlign = "center";
       ctx.fillText(badgeText, badgeX + badgeWidth / 2, badgeY + 52);
 
-      yOffset += 100;
+      yOffset += 180;
 
-      // Items - match exact site layout with flexible height
+      // Items - redesigned layout with larger fonts and better spacing
       const itemPadding = 40;
-      const baseItemHeight = 180;
-      const artworkSize = 120;
+      const artworkSize = 300;
       const maxItems = 10;
-      let currentY = yOffset;
+      
+      // First pass: calculate total height needed for vertical centering
+      const itemHeights = [];
+      let totalContentHeight = 0;
 
+      // Calculate heights for each item
+      for (let i = 0; i < Math.min(items.length, maxItems); i++) {
+        const item = items[i];
+        const textX = containerX + itemPadding + 100 + artworkSize + 40;
+        const rightX = containerX + containerWidth - itemPadding - 40;
+        const availableWidth = rightX - textX - 20;
+        
+        // Calculate title lines
+        ctx.font = "bold 52px -apple-system, BlinkMacSystemFont, sans-serif";
+        const titleWords = item.title.split(" ");
+        let titleLineCount = 0;
+        let currentLine = "";
+        
+        for (const word of titleWords) {
+          const testLine = currentLine + (currentLine ? " " : "") + word;
+          const lineWidth = ctx.measureText(testLine).width;
+          
+          if (lineWidth > availableWidth - 200 && currentLine) {
+            titleLineCount++;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) titleLineCount++;
+        
+        // Calculate artist lines
+        const parts = item.subtitle.split(" · ");
+        const artistText = parts[0];
+        const albumText = parts.length > 1 ? parts.slice(1).join(" · ") : "";
+        
+        ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
+        const artistWords = artistText.split(" ");
+        let artistLineCount = 0;
+        currentLine = "";
+        
+        for (const word of artistWords) {
+          const testLine = currentLine + (currentLine ? " " : "") + word;
+          const lineWidth = ctx.measureText(testLine).width;
+          
+          if (lineWidth > availableWidth && currentLine) {
+            artistLineCount++;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) artistLineCount++;
+        
+        // Calculate album lines
+        ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, sans-serif";
+        const albumWords = albumText.split(" ");
+        let albumLineCount = 0;
+        currentLine = "";
+        
+        for (const word of albumWords) {
+          const testLine = currentLine + (currentLine ? " " : "") + word;
+          const lineWidth = ctx.measureText(testLine).width;
+          
+          if (lineWidth > availableWidth && currentLine) {
+            albumLineCount++;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) albumLineCount++;
+        
+        const itemHeight = Math.max(
+          artworkSize + 20,
+          (titleLineCount * 56) + (artistLineCount * 48) + (albumLineCount * 48) + 60
+        );
+        itemHeights.push(itemHeight);
+        totalContentHeight += itemHeight + 40;
+      }
+      
+      // Calculate starting Y for vertical centering
+      const availableHeight = containerHeight - 200;
+      let currentY = containerY + 140 + Math.max(0, (availableHeight - totalContentHeight) / 2);
+      
+      // Second pass: actually draw the items
       for (let i = 0; i < Math.min(items.length, maxItems); i++) {
         const item = items[i];
         const itemX = containerX + itemPadding;
         const itemStartY = currentY;
+        const itemHeight = itemHeights[i];
 
         // Rank number
         ctx.fillStyle = "#666666";
-        ctx.font = "bold 52px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "right";
         ctx.fillText(`${item.rank}`, itemX + 70, itemStartY + 70);
 
-        // Artwork
+        // Artwork - positioning depends on section type
         const artX = itemX + 100;
-        const artY = itemStartY + 10;
+        // For artists (circle), center vertically; for songs/albums (square), align to top
+        const artY = artworkShape === "circle" 
+          ? itemStartY + (itemHeight - artworkSize) / 2
+          : itemStartY;
 
         if (item.artworkUrl) {
           try {
@@ -243,102 +330,129 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
           }
         }
 
-        // Text area
-        const textX = artX + artworkSize + 35;
+        // Text area - calculate available width
+        const textX = artX + artworkSize + 40;
         const rightX = containerX + containerWidth - itemPadding - 40;
-        let textY = itemStartY + 55;
+        const availableWidth = rightX - textX - 20;
+        
+        // For artists (circle), center text vertically; for songs/albums, align with artwork top
+        let textY = artworkShape === "circle"
+          ? itemStartY + (itemHeight - ((2 * 48) + 10)) / 2 + 44
+          : artY + 52;
 
-        // Title line with heart and stars
+        // Title line with heart and stars - reduced font
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 52px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "left";
-        ctx.fillText(item.title, textX, textY);
-
-        // Heart icon (inline with title, with proper spacing)
-        let iconX = textX + ctx.measureText(item.title).width + 25;
+        
+        // Word wrap title
+        const titleWords = item.title.split(" ");
+        const titleLines = [];
+        let titleLine = "";
+        
+        for (const word of titleWords) {
+          const testLine = titleLine + (titleLine ? " " : "") + word;
+          const lineWidth = ctx.measureText(testLine).width;
+          
+          if (lineWidth > availableWidth - 200 && titleLine) {
+            titleLines.push(titleLine);
+            titleLine = word;
+          } else {
+            titleLine = testLine;
+          }
+        }
+        if (titleLine) titleLines.push(titleLine);
+        
+        // Draw title lines
+        for (let i = 0; i < titleLines.length; i++) {
+          ctx.fillText(titleLines[i], textX, textY);
+          textY += 56;
+        }
+        
+        // Draw heart and stars on separate line after title
+        textY -= 8;
+        let iconX = textX;
         if (item.loved) {
           ctx.fillStyle = "#ff0436";
-          ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.font = "42px -apple-system, BlinkMacSystemFont, sans-serif";
           ctx.fillText("♥", iconX, textY);
           iconX += 60;
         }
-
-        // Stars (inline with title, with proper spacing)
+        
         if (item.rating && item.rating > 0) {
-          drawStars(ctx, item.rating, iconX, textY - 15, 28);
+          drawStars(ctx, item.rating, iconX, textY - 14, 28);
         } else if (item.averageRating && item.averageRating > 0) {
-          drawStars(ctx, item.averageRating, iconX, textY - 15, 28);
+          drawStars(ctx, item.averageRating, iconX, textY - 14, 28);
         }
 
-        textY += 55;
+        textY += 40;
 
         // Parse subtitle to separate artist and album
-        // Format: "Artist · Album" or just "Artist"
         const parts = item.subtitle.split(" · ");
         const artistText = parts[0];
         const albumText = parts.length > 1 ? parts.slice(1).join(" · ") : "";
 
-        // Artist and album on same line(s) with wrapping
+        // Artist section - separate line(s), smaller font
         ctx.fillStyle = "#999999";
-        ctx.font = "48px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
         
-        // Draw artist text
-        ctx.fillText(artistText, textX, textY);
-        let currentX = textX + ctx.measureText(artistText).width;
+        const artistWords = artistText.split(" ");
+        let artistLine = "";
         
-        if (albumText) {
-          // Draw separator
-          ctx.fillText(" · ", currentX, textY);
-          currentX += ctx.measureText(" · ").width;
+        for (const word of artistWords) {
+          const testLine = artistLine + (artistLine ? " " : "") + word;
+          const testWidth = ctx.measureText(testLine).width;
           
-          // Draw album text in bold
-          ctx.font = "bold 48px -apple-system, BlinkMacSystemFont, sans-serif";
-          
-          // Check if album text fits on same line
-          const albumWidth = ctx.measureText(albumText).width;
-          if (currentX + albumWidth > rightX - 60) {
-            // Wrap to next line
-            textY += 55;
-            currentX = textX;
+          if (testWidth > availableWidth && artistLine) {
+            ctx.fillText(artistLine, textX, textY);
+            textY += 48;
+            artistLine = word;
+          } else {
+            artistLine = testLine;
           }
+        }
+        if (artistLine) {
+          ctx.fillText(artistLine, textX, textY);
+          textY += 48;
+        }
+        
+        // Album section - separate line(s), bold and smaller font
+        if (albumText) {
+          ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, sans-serif";
+          const albumWords = albumText.split(" ");
+          let albumLine = "";
           
-          // Word wrap album text if needed
-          const words = albumText.split(" ");
-          let line = "";
-          for (let w = 0; w < words.length; w++) {
-            const testLine = line + (line ? " " : "") + words[w];
+          for (const word of albumWords) {
+            const testLine = albumLine + (albumLine ? " " : "") + word;
             const testWidth = ctx.measureText(testLine).width;
             
-            if (currentX + testWidth > rightX - 60 && line) {
-              ctx.fillText(line, currentX, textY);
-              textY += 55;
-              currentX = textX;
-              line = words[w];
+            if (testWidth > availableWidth && albumLine) {
+              ctx.fillText(albumLine, textX, textY);
+              textY += 48;
+              albumLine = word;
             } else {
-              line = testLine;
+              albumLine = testLine;
             }
           }
-          if (line) {
-            ctx.fillText(line, currentX, textY);
+          if (albumLine) {
+            ctx.fillText(albumLine, textX, textY);
           }
         }
 
-        // Play count (right aligned)
+        // Play count (right aligned, vertically centered)
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText(formatNumber(item.playCount), rightX, itemStartY + 55);
+        ctx.fillText(formatNumber(item.playCount), rightX, itemStartY + itemHeight / 2);
 
         // Listening time (below play count)
         if (item.totalListeningTime && item.totalListeningTime > 0) {
           ctx.fillStyle = "#999999";
-          ctx.font = "48px -apple-system, BlinkMacSystemFont, sans-serif";
-          ctx.fillText(formatDuration(item.totalListeningTime), rightX, itemStartY + 110);
+          ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.fillText(formatDuration(item.totalListeningTime), rightX, itemStartY + itemHeight / 2 + 54);
         }
 
-        // Calculate item height based on text wrapping
-        const itemHeight = Math.max(textY - itemStartY + 30, baseItemHeight);
-        currentY += itemHeight;
+        currentY += itemHeight + 40;
       }
 
       // Footer
