@@ -143,7 +143,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
       ctx.fillRect(0, 0, width, height);
 
       // Container with border (like the card on site)
-      const containerPadding = 100;
+      const containerPadding = 80;
       const containerX = containerPadding;
       const containerY = containerPadding;
       const containerWidth = width - containerPadding * 2;
@@ -161,39 +161,47 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
       ctx.stroke();
 
       // Header area
-      const headerPadding = 80;
-      let yOffset = containerY + headerPadding + 60;
+      const headerPadding = 60;
+      const headerY = containerY + headerPadding + 50;
 
-      // Title
+      // Music Replay text (top right)
+      ctx.fillStyle = "#666666";
+      ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("Music Replay", containerX + containerWidth - headerPadding, headerY);
+
+      // Title (aligned with Music Replay)
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 90px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.font = "bold 70px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText(title, containerX + headerPadding, yOffset);
+      ctx.fillText(title, containerX + headerPadding, headerY);
+      
+      let yOffset = headerY;
 
       // Sort mode badge (top right)
       const badgeText = sortMode === "plays" ? "Plays" : "Time";
-      ctx.font = "bold 48px -apple-system, BlinkMacSystemFont, sans-serif";
-      const badgeWidth = ctx.measureText(badgeText).width + 50;
+      ctx.font = "bold 38px -apple-system, BlinkMacSystemFont, sans-serif";
+      const badgeWidth = ctx.measureText(badgeText).width + 40;
       const badgeX = containerX + containerWidth - headerPadding - badgeWidth;
-      const badgeY = yOffset - 55;
+      const badgeY = yOffset - 45;
       
       // Badge background (gradient)
-      const badgeGradient = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeWidth, badgeY + 70);
+      const badgeGradient = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeWidth, badgeY + 60);
       badgeGradient.addColorStop(0, "#ff0436");
       badgeGradient.addColorStop(1, "#d00330");
       ctx.fillStyle = badgeGradient;
-      drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, 70, 35);
+      drawRoundedRect(ctx, badgeX, badgeY, badgeWidth, 60, 30);
       ctx.fill();
       
       // Badge text
       ctx.fillStyle = "#ffffff";
       ctx.textAlign = "center";
-      ctx.fillText(badgeText, badgeX + badgeWidth / 2, badgeY + 52);
+      ctx.fillText(badgeText, badgeX + badgeWidth / 2, badgeY + 44);
 
-      yOffset += 180;
+      yOffset += 120;
 
       // Items - redesigned layout with larger fonts and better spacing
-      const itemPadding = 40;
+      const itemPadding = 30;
       const artworkSize = 300;
       const maxItems = 10;
       
@@ -209,7 +217,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         const availableWidth = rightX - textX - 20;
         
         // Calculate title lines
-        ctx.font = "bold 52px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 42px -apple-system, BlinkMacSystemFont, sans-serif";
         const titleWords = item.title.split(" ");
         let titleLineCount = 0;
         let currentLine = "";
@@ -218,7 +226,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
           const testLine = currentLine + (currentLine ? " " : "") + word;
           const lineWidth = ctx.measureText(testLine).width;
           
-          if (lineWidth > availableWidth - 200 && currentLine) {
+          if (lineWidth > availableWidth - 180 && currentLine) {
             titleLineCount++;
             currentLine = word;
           } else {
@@ -232,7 +240,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         const artistText = parts[0];
         const albumText = parts.length > 1 ? parts.slice(1).join(" · ") : "";
         
-        ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
         const artistWords = artistText.split(" ");
         let artistLineCount = 0;
         currentLine = "";
@@ -251,7 +259,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         if (currentLine) artistLineCount++;
         
         // Calculate album lines
-        ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
         const albumWords = albumText.split(" ");
         let albumLineCount = 0;
         currentLine = "";
@@ -271,10 +279,10 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         
         const itemHeight = Math.max(
           artworkSize + 20,
-          (titleLineCount * 56) + (artistLineCount * 48) + (albumLineCount * 48) + 60
+          (titleLineCount * 46) + (artistLineCount * 40) + (albumLineCount * 40) + 50
         );
         itemHeights.push(itemHeight);
-        totalContentHeight += itemHeight + 40;
+        totalContentHeight += itemHeight + 30;
       }
       
       // Calculate starting Y for vertical centering
@@ -290,12 +298,12 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
 
         // Rank number
         ctx.fillStyle = "#666666";
-        ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 46px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText(`${item.rank}`, itemX + 70, itemStartY + 70);
+        ctx.fillText(`${item.rank}`, itemX + 60, itemStartY + 60);
 
         // Artwork - positioning depends on section type
-        const artX = itemX + 100;
+        const artX = itemX + 80;
         // For artists (circle), center vertically; for songs/albums (square), align to top
         const artY = artworkShape === "circle" 
           ? itemStartY + (itemHeight - artworkSize) / 2
@@ -331,18 +339,18 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         }
 
         // Text area - calculate available width
-        const textX = artX + artworkSize + 40;
-        const rightX = containerX + containerWidth - itemPadding - 40;
+        const textX = artX + artworkSize + 30;
+        const rightX = containerX + containerWidth - itemPadding - 30;
         const availableWidth = rightX - textX - 20;
         
         // For artists (circle), center text vertically; for songs/albums, align with artwork top
         let textY = artworkShape === "circle"
-          ? itemStartY + (itemHeight - ((2 * 48) + 10)) / 2 + 44
-          : artY + 52;
+          ? itemStartY + (itemHeight - ((2 * 40) + 10)) / 2 + 38
+          : artY + 42;
 
         // Title line with heart and stars - reduced font
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 52px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 42px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "left";
         
         // Word wrap title
@@ -354,7 +362,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
           const testLine = titleLine + (titleLine ? " " : "") + word;
           const lineWidth = ctx.measureText(testLine).width;
           
-          if (lineWidth > availableWidth - 200 && titleLine) {
+          if (lineWidth > availableWidth - 180 && titleLine) {
             titleLines.push(titleLine);
             titleLine = word;
           } else {
@@ -366,26 +374,26 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         // Draw title lines
         for (let i = 0; i < titleLines.length; i++) {
           ctx.fillText(titleLines[i], textX, textY);
-          textY += 56;
+          textY += 46;
         }
         
         // Draw heart and stars on separate line after title
-        textY -= 8;
+        textY -= 6;
         let iconX = textX;
         if (item.loved) {
           ctx.fillStyle = "#ff0436";
-          ctx.font = "42px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.font = "34px -apple-system, BlinkMacSystemFont, sans-serif";
           ctx.fillText("♥", iconX, textY);
-          iconX += 60;
+          iconX += 48;
         }
         
         if (item.rating && item.rating > 0) {
-          drawStars(ctx, item.rating, iconX, textY - 14, 28);
+          drawStars(ctx, item.rating, iconX, textY - 12, 24);
         } else if (item.averageRating && item.averageRating > 0) {
-          drawStars(ctx, item.averageRating, iconX, textY - 14, 28);
+          drawStars(ctx, item.averageRating, iconX, textY - 12, 24);
         }
 
-        textY += 40;
+        textY += 32;
 
         // Parse subtitle to separate artist and album
         const parts = item.subtitle.split(" · ");
@@ -394,7 +402,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
 
         // Artist section - separate line(s), smaller font
         ctx.fillStyle = "#999999";
-        ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
         
         const artistWords = artistText.split(" ");
         let artistLine = "";
@@ -405,7 +413,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
           
           if (testWidth > availableWidth && artistLine) {
             ctx.fillText(artistLine, textX, textY);
-            textY += 48;
+            textY += 40;
             artistLine = word;
           } else {
             artistLine = testLine;
@@ -413,12 +421,12 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
         }
         if (artistLine) {
           ctx.fillText(artistLine, textX, textY);
-          textY += 48;
+          textY += 40;
         }
         
         // Album section - separate line(s), bold and smaller font
         if (albumText) {
-          ctx.font = "bold 44px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
           const albumWords = albumText.split(" ");
           let albumLine = "";
           
@@ -428,7 +436,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
             
             if (testWidth > availableWidth && albumLine) {
               ctx.fillText(albumLine, textX, textY);
-              textY += 48;
+              textY += 40;
               albumLine = word;
             } else {
               albumLine = testLine;
@@ -441,26 +449,19 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
 
         // Play count (right aligned, vertically centered)
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 56px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.font = "bold 46px -apple-system, BlinkMacSystemFont, sans-serif";
         ctx.textAlign = "right";
         ctx.fillText(formatNumber(item.playCount), rightX, itemStartY + itemHeight / 2);
 
         // Listening time (below play count)
         if (item.totalListeningTime && item.totalListeningTime > 0) {
           ctx.fillStyle = "#999999";
-          ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
-          ctx.fillText(formatDuration(item.totalListeningTime), rightX, itemStartY + itemHeight / 2 + 54);
+          ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.fillText(formatDuration(item.totalListeningTime), rightX, itemStartY + itemHeight / 2 + 44);
         }
 
-        currentY += itemHeight + 40;
+        currentY += itemHeight + 30;
       }
-
-      // Footer
-      const footerY = containerY + containerHeight - 60;
-      ctx.fillStyle = "#666666";
-      ctx.font = "44px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("Music Replay", width / 2, footerY);
 
       // Download
       const link = document.createElement("a");
