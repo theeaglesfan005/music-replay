@@ -164,13 +164,7 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
       const headerPadding = 60;
       const headerY = containerY + headerPadding + 50;
 
-      // Music Replay text (top right)
-      ctx.fillStyle = "#666666";
-      ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText("Music Replay", containerX + containerWidth - headerPadding, headerY);
-
-      // Title (aligned with Music Replay)
+      // Title
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 70px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "left";
@@ -178,12 +172,18 @@ export default function ShareButton({ title, items, sortMode = "plays", artworkS
       
       let yOffset = headerY;
 
-      // Sort mode badge (top right)
+      // Music Replay text (top right, above badge)
+      ctx.fillStyle = "#666666";
+      ctx.font = "36px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("Music Replay", containerX + containerWidth - headerPadding, headerY);
+
+      // Sort mode badge (top right, below Music Replay)
       const badgeText = sortMode === "plays" ? "Plays" : "Time";
       ctx.font = "bold 38px -apple-system, BlinkMacSystemFont, sans-serif";
       const badgeWidth = ctx.measureText(badgeText).width + 40;
       const badgeX = containerX + containerWidth - headerPadding - badgeWidth;
-      const badgeY = yOffset - 45;
+      const badgeY = headerY + 20;
       
       // Badge background (gradient)
       const badgeGradient = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeWidth, badgeY + 60);
