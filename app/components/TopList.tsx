@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { EyeOff, Music, User, Disc3 } from "lucide-react";
 import { formatNumber, formatDuration } from "../lib/api";
+import Stars from "./Stars";
+import ShareButton from "./ShareButton";
 
 interface TopListItem {
   rank: number;
@@ -12,6 +14,8 @@ interface TopListItem {
   totalListeningTime?: number;
   extra?: string;
   loved?: boolean;
+  rating?: number;
+  averageRating?: number;
   albumName?: string;
   artistName?: string;
   artworkUrl?: string;
@@ -25,6 +29,7 @@ interface TopListProps {
   onExcludeAlbum?: (albumName: string, artistName: string) => void;
   artworkShape?: "square" | "circle";
   headerRight?: React.ReactNode;
+  sortMode?: "plays" | "time";
 }
 
 function ArtworkImage({ src, shape, fallbackIcon }: { src?: string; shape: "square" | "circle"; fallbackIcon: React.ReactNode }) {
@@ -50,14 +55,22 @@ function ArtworkImage({ src, shape, fallbackIcon }: { src?: string; shape: "squa
   );
 }
 
-export default function TopList({ title, items, showAll, onToggleShowAll, onExcludeAlbum, artworkShape = "square", headerRight }: TopListProps) {
+export default function TopList({ title, items, showAll, onToggleShowAll, onExcludeAlbum, artworkShape = "square", headerRight, sortMode }: TopListProps) {
   const displayed = showAll ? items : items.slice(0, 10);
 
   return (
     <div className="rounded-2xl border border-card-border bg-card-bg p-4">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="text-base font-bold">{title}</h3>
-        {headerRight}
+        <div className="flex items-center gap-2">
+          {headerRight}
+          <ShareButton
+            title={title}
+            items={items}
+            sortMode={sortMode}
+            artworkShape={artworkShape}
+          />
+        </div>
       </div>
       <div className="space-y-1">
         {displayed.map((item) => (
@@ -76,10 +89,12 @@ export default function TopList({ title, items, showAll, onToggleShowAll, onExcl
               />
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm font-semibold leading-tight wrap-break-word">
-                {item.title}{item.loved && <span className="text-accent text-xs ml-1">♥</span>}
+              <p className="text-xs md:text-sm font-semibold leading-tight wrap-break-word flex items-center gap-1">
+                <span>{item.title}</span>
+                {item.loved && <span className="text-accent text-xs">♥</span>}
+                {item.rating !== undefined && item.rating > 0 && <Stars count={item.rating} size={10} />}
               </p>
-              <p className="text-[10px] md:text-xs leading-tight text-muted wrap-break-word">
+              <p className="text-[10px] md:text-xs leading-tight text-muted wrap-break-word flex items-center gap-1">
                 {item.albumName && item.subtitle.includes(`· ${item.albumName}`) ? (
                   <>
                     {item.subtitle.split(`· ${item.albumName}`)[0]}
@@ -88,6 +103,12 @@ export default function TopList({ title, items, showAll, onToggleShowAll, onExcl
                   </>
                 ) : (
                   item.subtitle
+                )}
+                {item.averageRating !== undefined && item.averageRating > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <span className="text-muted">·</span>
+                    <Stars count={item.averageRating} size={9} />
+                  </span>
                 )}
               </p>
             </div>

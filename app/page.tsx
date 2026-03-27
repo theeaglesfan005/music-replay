@@ -369,6 +369,7 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-3">
               <TopList
                 title="Top 10 Songs"
+                sortMode={songSort}
                 headerRight={
                   <div className="flex gap-1">
                     <button onClick={() => setSongSort("plays")} className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${songSort === "plays" ? "gradient-bg text-white" : "border border-card-border text-muted hover:bg-white/5"}`}>Plays</button>
@@ -382,6 +383,7 @@ export default function Home() {
                   playCount: s.playCount,
                   totalListeningTime: s.totalListeningTime,
                   loved: s.loved,
+                  rating: s.rating,
                   albumName: s.album,
                   artistName: s.artist,
                   artworkUrl: songArtworkUrl(s.name, s.artist, s.album, s.albumArtist),
@@ -390,6 +392,7 @@ export default function Home() {
               />
               <TopList
                 title="Top 10 Artists"
+                sortMode={artistSort}
                 headerRight={
                   <div className="flex gap-1">
                     <button onClick={() => setArtistSort("time")} className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${artistSort === "time" ? "gradient-bg text-white" : "border border-card-border text-muted hover:bg-white/5"}`}>Time</button>
@@ -408,6 +411,7 @@ export default function Home() {
               />
               <TopList
                 title="Top 10 Albums"
+                sortMode={albumSort}
                 headerRight={
                   <div className="flex gap-1">
                     <button onClick={() => setAlbumSort("plays")} className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${albumSort === "plays" ? "gradient-bg text-white" : "border border-card-border text-muted hover:bg-white/5"}`}>Plays</button>
@@ -420,6 +424,7 @@ export default function Home() {
                   subtitle: `${a.artist}${a.year ? ` · ${a.year}` : ""}`,
                   playCount: a.playCount,
                   totalListeningTime: a.totalListeningTime,
+                  averageRating: a.averageRating,
                   albumName: a.album,
                   artistName: a.artist,
                   artworkUrl: albumArtworkUrl(a.album, a.artist),
@@ -439,6 +444,7 @@ export default function Home() {
             </div>
             <TopList
               title="Top Songs"
+              sortMode={songSort}
               items={(songSort === "plays" ? stats.topSongsByPlays : stats.topSongsByTime).map((s) => ({
                 rank: s.rank,
                 title: s.name,
@@ -446,6 +452,7 @@ export default function Home() {
                 playCount: s.playCount,
                 totalListeningTime: s.totalListeningTime,
                 loved: s.loved,
+                rating: s.rating,
                 extra: s.genre,
                 albumName: s.album,
                 artistName: s.artist,
@@ -467,6 +474,7 @@ export default function Home() {
             </div>
             <TopList
               title="Top Artists"
+              sortMode={artistSort}
               items={(artistSort === "plays" ? stats.topArtistsByPlays : stats.topArtistsByTime).map((a) => ({
                 rank: a.rank,
                 title: a.artist,
@@ -491,12 +499,14 @@ export default function Home() {
             </div>
             <TopList
               title="Top Albums"
+              sortMode={albumSort}
               items={(albumSort === "plays" ? stats.topAlbumsByPlays : stats.topAlbumsByTime).map((a) => ({
                 rank: a.rank,
                 title: a.album,
                 subtitle: `${a.artist}${a.year ? ` · ${a.year}` : ""}`,
                 playCount: a.playCount,
                 totalListeningTime: a.totalListeningTime,
+                averageRating: a.averageRating,
                 albumName: a.album,
                 artistName: a.artist,
                 artworkUrl: albumArtworkUrl(a.album, a.artist),

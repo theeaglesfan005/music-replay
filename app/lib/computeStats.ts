@@ -425,20 +425,27 @@ export async function computeStatsFromLibrary(filter?: StatsFilter): Promise<Sta
   const topArtistsByTime = [...artistList].sort((a, b) => b.totalListeningTime - a.totalListeningTime).slice(0, 100);
 
   // Top albums
-  const albumMap = new Map<string, { plays: number; duration: number; tracks: number; artist: string; year: number }>();
+  const albumMap = new Map<string, { plays: number; duration: number; tracks: number; artist: string; year: number; ratings: number[] }>();
   for (const t of playedTracks) {
     const album = t.album || "Unknown";
-    const entry = albumMap.get(album) || { plays: 0, duration: 0, tracks: 0, artist: "", year: 0 };
+    const entry = albumMap.get(album) || { plays: 0, duration: 0, tracks: 0, artist: "", year: 0, ratings: [] };
     const pc = t.playCount || 0;
     entry.plays += pc;
     entry.duration += (t.duration || 0) * pc;
     entry.tracks += 1;
     if (!entry.artist) entry.artist = t.albumArtist || t.artist || "Unknown";
     if (!entry.year) entry.year = t.year || 0;
+    // Track ratings for average calculation
+    const raw = t.rating || 0;
+    if (raw > 0) {
+      const stars = Math.round(raw / 20);
+      entry.ratings.push(stars);
+    }
     albumMap.set(album, entry);
   }
   const albumList = Array.from(albumMap.entries()).map(([k, v]) => ({
     album: k, artist: v.artist, playCount: v.plays, totalListeningTime: v.duration, trackCount: v.tracks, year: v.year,
+    averageRating: v.ratings.length > 0 ? Math.round(v.ratings.reduce((a, b) => a + b, 0) / v.ratings.length * 100) / 100 : 0,
   }));
   const topAlbumsByPlays = [...albumList].sort((a, b) => b.playCount - a.playCount).slice(0, 100);
   const topAlbumsByTime = [...albumList].sort((a, b) => b.totalListeningTime - a.totalListeningTime).slice(0, 100);
@@ -519,6 +526,7 @@ export async function computeStatsFromLibrary(filter?: StatsFilter): Promise<Sta
     playCount: t.playCount || 0, duration: t.duration || 0,
     totalListeningTime: (t.duration || 0) * (t.playCount || 0),
     genre: t.genre || "", year: t.year || 0, loved: t.loved || false,
+    rating: (t.rating || 0) > 0 ? Math.round((t.rating || 0) / 20) : 0,
   });
 
   return {

@@ -44,6 +44,7 @@ export interface TopSong {
   genre: string;
   year: number;
   loved: boolean;
+  rating: number;
 }
 
 export interface TopArtist {
@@ -63,6 +64,7 @@ export interface TopAlbum {
   totalListeningTime: number;
   trackCount: number;
   year: number;
+  averageRating: number;
 }
 
 export interface TopGenre {

@@ -2,25 +2,10 @@
 
 import { Star } from "lucide-react";
 import { RatingStats, formatNumber } from "../lib/api";
+import Stars from "./Stars";
 
 interface RatingCardProps {
   ratings: RatingStats;
-}
-
-function Stars({ count, size = 14 }: { count: number; size?: number }) {
-  return (
-    <span className="inline-flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          size={size}
-          className={i <= count ? "" : "text-white/10"}
-          style={i <= count ? { color: "#FF0436" } : undefined}
-          fill={i <= count ? "currentColor" : "none"}
-        />
-      ))}
-    </span>
-  );
 }
 
 export default function RatingCard({ ratings }: RatingCardProps) {
@@ -48,7 +33,7 @@ export default function RatingCard({ ratings }: RatingCardProps) {
             <span className="text-3xl font-bold tracking-tight" style={{ color: "#FF0436" }}>
               {ratings.averageRating.toFixed(2)}
             </span>
-            <Stars count={Math.round(ratings.averageRating)} size={16} />
+            <Stars count={ratings.averageRating} size={16} />
           </div>
           <p className="mt-0.5 text-xs text-muted">
             from {formatNumber(ratings.ratedCount)} rated tracks
