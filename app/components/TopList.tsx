@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { EyeOff, Music, User, Disc3 } from "lucide-react";
-import { formatNumber, formatDuration } from "../lib/api";
+import Image from "next/image";
+import { EyeOff, Music, User, Disc3, History } from "lucide-react";
+import { formatNumber, formatDuration, AlbumAlias } from "../lib/api";
 import Stars from "./Stars";
 import ShareButton from "./ShareButton";
 
@@ -19,6 +20,7 @@ interface TopListItem {
   albumName?: string;
   artistName?: string;
   artworkUrl?: string;
+  aliases?: AlbumAlias[];
 }
 
 interface TopListProps {
@@ -45,12 +47,15 @@ function ArtworkImage({ src, shape, fallbackIcon }: { src?: string; shape: "squa
   }
 
   return (
-    <img
+    <Image
       src={src}
       alt=""
+      width={48}
+      height={48}
       className={`h-8 w-8 md:h-10 md:w-10 xl:h-12 xl:w-12 shrink-0 ${rounding} object-cover bg-white/5`}
       onError={() => setFailed(true)}
       loading="lazy"
+      unoptimized
     />
   );
 }
@@ -93,6 +98,14 @@ export default function TopList({ title, items, showAll, onToggleShowAll, onExcl
                 <span>{item.title}</span>
                 {item.loved && <span className="text-accent text-xs">♥</span>}
                 {item.rating !== undefined && item.rating > 0 && <Stars count={item.rating} size={10} />}
+                {item.aliases && item.aliases.length > 0 && (
+                  <span
+                    className="text-muted hover:text-accent transition-colors cursor-help"
+                    title={`Previously known as:\n${item.aliases.map(a => `• ${a.album}`).join('\n')}`}
+                  >
+                    <History size={12} />
+                  </span>
+                )}
               </p>
               <p className="text-[10px] md:text-xs leading-tight text-muted wrap-break-word flex items-center gap-1">
                 {item.albumName && item.subtitle.includes(`· ${item.albumName}`) ? (

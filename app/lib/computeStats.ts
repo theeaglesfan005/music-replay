@@ -4,6 +4,7 @@
  * estimate_period_plays, etc. for use in static mode.
  */
 
+import pako from "pako";
 import type { Stats, StatsFilter, AlbumExclusion } from "./api";
 
 // Raw track from the library export JSON
@@ -58,6 +59,14 @@ async function loadStaticJson<T>(filename: string): Promise<T> {
   return res.json();
 }
 
+async function loadGzippedJson<T>(filename: string): Promise<T> {
+  const res = await fetch(`${BASE_PATH}/data/${filename}`);
+  if (!res.ok) throw new Error(`Failed to load ${filename}`);
+  const arrayBuffer = await res.arrayBuffer();
+  const decompressed = pako.inflate(new Uint8Array(arrayBuffer), { to: "string" });
+  return JSON.parse(decompressed);
+}
+
 async function getLibrary(): Promise<LibraryExport> {
   if (!cachedLibrary) {
     cachedLibrary = await loadStaticJson<LibraryExport>("library.json");
@@ -68,7 +77,7 @@ async function getLibrary(): Promise<LibraryExport> {
 async function getSnapshots(): Promise<SnapshotData> {
   if (!cachedSnapshots) {
     try {
-      cachedSnapshots = await loadStaticJson<SnapshotData>("snapshots.json");
+      cachedSnapshots = await loadGzippedJson<SnapshotData>("snapshots.json.gz");
     } catch {
       cachedSnapshots = { snapshots: [] };
     }

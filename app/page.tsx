@@ -510,6 +510,7 @@ export default function Home() {
                 albumName: a.album,
                 artistName: a.artist,
                 artworkUrl: albumArtworkUrl(a.album, a.artist),
+                aliases: a.aliases,
               }))}
               showAll={showAllAlbums}
               onToggleShowAll={() => setShowAllAlbums(!showAllAlbums)}

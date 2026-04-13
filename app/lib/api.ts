@@ -56,6 +56,13 @@ export interface TopArtist {
   uniqueSongs: number;
 }
 
+export interface AlbumAlias {
+  album: string;
+  artist: string;
+  firstSeen: string;
+  lastSeen: string;
+}
+
 export interface TopAlbum {
   rank: number;
   album: string;
@@ -65,6 +72,7 @@ export interface TopAlbum {
   trackCount: number;
   year: number;
   averageRating: number;
+  aliases?: AlbumAlias[];
 }
 
 export interface TopGenre {
